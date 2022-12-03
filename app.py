@@ -68,7 +68,7 @@ More details on the method and training will come in a future blog post.
 device = "cuda" if torch.cuda.is_available() else "cpu"
 pipe = StableDiffusionImageVariationEmbedsPipeline.from_pretrained(
     "matttrent/sd-image-variations-diffusers",
-    )
+)
 pipe = pipe.to(device)
 
 def dummy(images, **kwargs):
