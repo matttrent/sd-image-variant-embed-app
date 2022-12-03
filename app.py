@@ -89,7 +89,7 @@ output = gr.Gallery(label="Generated variations")
 output.style(grid=2)
 
 examples = [
-    ["examples/painted ladies.png", "", "", 1.0, 3, 4, 25, 0],
+    ["examples/painted ladies.png", "", "", 1.0, 3, 1, 25, 0],
     ["examples/painted ladies.png", "a color photograph", "a black and white photograph", 1.0, 3, 1, 25, 0],
     ["examples/painted ladies.png", "a color photograph", "a brightly colored oil painting", 1.0, 3, 1, 25, 0],
 ]
