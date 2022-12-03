@@ -2,26 +2,35 @@ import gradio as gr
 import torch
 from PIL import Image
 
-from lambda_diffusers import StableDiffusionImageEmbedPipeline
+from diffusers import StableDiffusionImageVariationEmbedsPipeline
 
 def main(
     input_im,
+    base_prompt=None,
+    edit_prompt=None,
+    edit_prompt_weight=1.0,
     scale=3.0,
-    n_samples=4,
     steps=25,
     seed=0,
     ):
+
     generator = torch.Generator(device=device).manual_seed(int(seed))
 
+    n_samples = 1
     images_list = pipe(
         n_samples*[input_im],
+        base_prompt=base_prompt,
+        edit_prompt=edit_prompt,
+        edit_prompt_weight=edit_prompt_weight,
         guidance_scale=scale,
         num_inference_steps=steps,
         generator=generator,
         )
 
+    return images_list.images
+
     images = []
-    for i, image in enumerate(images_list["sample"]):
+    for i, image in enumerate(images_list.images):
         if(images_list["nsfw_content_detected"][i]):
             safe_image = Image.open(r"unsafe.png")
             images.append(safe_image)
@@ -57,16 +66,22 @@ More details on the method and training will come in a future blog post.
 """
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-pipe = StableDiffusionImageEmbedPipeline.from_pretrained(
-    "lambdalabs/sd-image-variations-diffusers",
-    revision="273115e88df42350019ef4d628265b8c29ef4af5",
+pipe = StableDiffusionImageVariationEmbedsPipeline.from_pretrained(
+    "matttrent/sd-image-variations-diffusers",
     )
 pipe = pipe.to(device)
 
+def dummy(images, **kwargs):
+    return images, False * len(images)
+
+pipe.safety_checker = dummy
+
 inputs = [
     gr.Image(),
+    gr.Textbox(label="Base prompt"),
+    gr.Textbox(label="Edit prompt"),
+    gr.Slider(0.0, 2.0, value=1.0, step=0.1, label="Edit prompt weight"),
     gr.Slider(0, 25, value=3, step=1, label="Guidance scale"),
-    gr.Slider(1, 4, value=1, step=1, label="Number images"),
     gr.Slider(5, 50, value=25, step=5, label="Steps"),
     gr.Number(0, labal="Seed", precision=0)
 ]
@@ -74,8 +89,9 @@ output = gr.Gallery(label="Generated variations")
 output.style(grid=2)
 
 examples = [
-    ["examples/vermeer.jpg", 3, 1, 25, 0],
-    ["examples/matisse.jpg", 3, 1, 25, 0],
+    ["examples/painted ladies.png", None, None, 1.0, 3, 25, 0],
+    ["examples/painted ladies.png", "a color photograph", "a black and white photograph", 1.0, 3, 25, 0],
+    ["examples/painted ladies.png", "a color photograph", "a brightly colored oil painting", 1.0, 3, 25, 0],
 ]
 
 demo = gr.Interface(
