@@ -1,6 +1,8 @@
 import gradio as gr
 import torch
 from PIL import Image
+from torchvision import transforms
+
 
 from diffusers import StableDiffusionImageVariationEmbedsPipeline
 
@@ -17,13 +19,26 @@ def main(
 
     generator = torch.Generator(device=device).manual_seed(int(seed))
 
+    tform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Resize(
+        (224, 224),
+        interpolation=transforms.InterpolationMode.BICUBIC,
+        antialias=False,
+        ),
+        transforms.Normalize(
+          [0.48145466, 0.4578275, 0.40821073],
+          [0.26862954, 0.26130258, 0.27577711]),
+    ])
+    inp = tform(input_im).to(device)
+
     if len(base_prompt) == 0:
         base_prompt = None
     if len(edit_prompt) == 0:
         edit_prompt = None
 
     images_list = pipe(
-        n_samples*[input_im],
+        inp.tile(n_samples, 1, 1, 1),
         base_prompt=base_prompt,
         edit_prompt=edit_prompt,
         edit_prompt_weight=edit_prompt_weight,
@@ -67,6 +82,7 @@ Training was done on 4xA6000 GPUs on [Lambda GPU Cloud](https://lambdalabs.com/s
 device = "cuda" if torch.cuda.is_available() else "cpu"
 pipe = StableDiffusionImageVariationEmbedsPipeline.from_pretrained(
     "matttrent/sd-image-variations-diffusers",
+    # "/Users/mtrent/Code/stable-diffusion/sd-image-variations-diffusers",
 )
 pipe = pipe.to(device)
 

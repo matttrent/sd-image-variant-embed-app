@@ -1,5 +1,6 @@
 git+https://github.com/matttrent/diffusers.git#egg=diffusers
---extra-index-url https://download.pytorch.org/whl/cu113 
-torch
 transformers
 accelerate
+--extra-index-url https://download.pytorch.org/whl/cu113 
+torch
+torchvision
